@@ -1,0 +1,21 @@
+# Binaries / images / firmware (do NOT commit vendor firmware or huge images)
+*.bin
+*.img
+*.core
+*.rpk
+*.apk
+*.zip
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Local temp / AVD
+.vela/
+tmp/
+*.log
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
