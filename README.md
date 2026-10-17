@@ -40,6 +40,41 @@
 
 ---
 
+## 快速开始
+
+克隆后三步即可用（路径已全部改为可配置，无需改脚本）：
+
+```bash
+git clone https://github.com/dargon682/xiaomi-band10-vela-emulator.git
+cd xiaomi-band10-vela-emulator
+
+# 1) 一键引导：安装工具链 + 创建 212x520 手环 10 虚拟设备
+./scripts/setup.sh
+
+# 2) 无界面启动模拟器（首次会联网拉取系统镜像）
+$HOME/.vela/sdk/emulator/linux-x86_64/emulator \
+  -vela -avd band10_miwear -show-kernel -no-window -grpc 8556
+
+# 3) 另开终端，测试 RPK 快应用
+./scripts/test-rpk.sh <your-app.rpk> <package> 8556
+```
+
+> 克隆仓库**只含脚本与文档**（不含工具链二进制 / 系统镜像 / 固件，也无版权风险）。
+> 工具链与镜像由 `setup.sh` / 首次启动时联网获取。
+
+### 环境变量（可选，用于覆盖默认路径）
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `VELA_SDK_HOME` | `$HOME/.vela/sdk` | SDK 目录 |
+| `VELA_VVD_HOME` | `$HOME/.vela/vvd` | 虚拟设备目录 |
+| `VELA_IMAGE_DIR` | `<SDK>/system-images/vela-miwear-watch-5.0` | 系统镜像目录 |
+| `VVD_NAME` | `band10_miwear` | 虚拟设备名 |
+| `VVD_WIDTH`/`HEIGHT`/`RADIUS` | `212`/`520`/`90` | 屏幕参数 |
+| `PROBE` | 仓库根目录 | 工具链所在 npm 工程 |
+
+---
+
 ## 1. 环境准备
 
 - 操作系统：Linux x86_64
@@ -50,10 +85,12 @@
 安装模拟器工具链（提供 VVD 管理、镜像下载、gRPC 客户端、内置 adb）：
 
 ```bash
-mkdir -p aiot-probe && cd aiot-probe
-npm init -y
-npm i @aiot-toolkit/emulator
+# 在仓库根目录安装（推荐）：脚本即可直接 require，无需 NODE_PATH
+npm i
 ```
+
+> 也可单独建工程：`mkdir -p aiot-probe && cd aiot-probe && npm i @aiot-toolkit/emulator`，
+> 此时运行脚本需指定 `PROBE=/path/to/aiot-probe` 或 `NODE_PATH=/path/to/aiot-probe/node_modules`。
 
 `@aiot-toolkit/emulator` 内各模块的用途：
 
@@ -370,7 +407,7 @@ am <start|stop> packagename
 | `Bad LCD density: 326` | 内核拒绝非标准密度 | `hw.lcd.density` 改为 `320` |
 | 全量替换手环 10 分区后黑屏 | 内核默认表盘 ID 与真机不符 | 表盘目录 ID 别名 + 重算校验和（第 8 节） |
 | romfs 目录遍历异常 | inode 字段偏移/next 指针掩码理解错 | `next` 低 4 位为类型、高位为绝对偏移 |
-| `require('@aiot-toolkit/emulator/...')` 找不到 | 脚本不在包目录内 | 设 `NODE_PATH=<probe>/node_modules` |
+| `require('@aiot-toolkit/emulator/...')` 找不到 | 未安装工具链或脚本不在工程内 | 在仓库根执行 `npm i`（或设 `PROBE` / `NODE_PATH`） |
 | `find` / `cat /proc/...` 在 NSH 不可用 | NuttX NSH 命令子集有限 | 用 `ls` / 内置 `pm` / `am` |
 | adb 未安装 | 环境无 system adb | 用工具链自带 `@miwt/adb/bin/linux/adb` |
 
@@ -382,9 +419,11 @@ am <start|stop> packagename
 .
 ├── README.md
 ├── LICENSE
+├── package.json                     # 依赖 @aiot-toolkit/emulator（供脚本 require）
 ├── docs/
 │   └── romfs-format.md              # romfs 容器/分区格式与校验和逆向说明
 ├── scripts/
+│   ├── setup.sh                     # 一键引导：装工具链 + 建 212x520 手环 VVD
 │   ├── vvd/
 │   │   ├── create-vvd.js            # 创建基础/手环规格 VVD
 │   │   ├── create-band10.js         # 创建 212×520 手环 10 VVD

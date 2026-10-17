@@ -6,9 +6,9 @@
 # 例：
 #   ./test-rpk.sh ./com.bandbbs.ebook.release.3.1.rpk com.bandbbs.ebook 8556
 #
-# 依赖环境变量（可选，默认按本仓库约定）：
-#   PROBE     @aiot-toolkit/emulator 所在 npm 工程目录（默认 /tmp/aiot-probe）
-#   SDK_HOME  Vela SDK 目录（默认 /root/.vela/sdk）
+# 依赖环境变量（可选）：
+#   PROBE     @aiot-toolkit/emulator 所在 npm 工程目录（默认=仓库根目录，先跑 ./scripts/setup.sh）
+#   SERIAL    adb 设备号（默认不指定，自动选择唯一设备）
 set -euo pipefail
 
 RPK="${1:?usage: test-rpk.sh <app.rpk> <package> [grpc_port] [serial]}"
@@ -16,11 +16,15 @@ PKG="${2:?usage: test-rpk.sh <app.rpk> <package> [grpc_port] [serial]}"
 GRPC_PORT="${3:-8556}"
 SERIAL="${4:-}"
 
-PROBE="${PROBE:-/tmp/aiot-probe}"
-SDK_HOME="${SDK_HOME:-/root/.vela/sdk}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROBE="${PROBE:-$REPO_ROOT}"
 
 ADB="${PROBE}/node_modules/@miwt/adb/bin/linux/adb"
-SHOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts/vvd" && pwd)/shot.js"
+SHOT_DIR="${REPO_ROOT}/scripts/vvd/shot.js"
+if [ ! -x "$ADB" ]; then
+  echo "错误：未找到工具链 adb（$ADB）。请先执行 ./scripts/setup.sh" >&2
+  exit 1
+fi
 
 SERIAL_OPT=()
 [ -n "$SERIAL" ] && SERIAL_OPT=(-s "$SERIAL")
